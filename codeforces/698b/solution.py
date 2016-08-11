@@ -7,9 +7,15 @@ def readline_int(delta=0):
 
 class Solution(object):
     def find(self, ident, fa):
-        if fa[ident] != ident:
-             fa[ident] = self.find(fa[ident], fa)
-        return fa[ident]
+        root = ident
+        while fa[root] != root:
+            root = fa[root]
+        cursor = ident
+        while cursor != root:
+            fa_cursor = fa[cursor]
+            fa[cursor] = root
+            cursor = fa_cursor
+        return root
 
     def merge(self, ident_child, ident_father, fa):
         fa_child = self.find(ident_child, fa)
