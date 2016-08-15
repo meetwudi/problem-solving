@@ -21,7 +21,6 @@ class AVLNode(object):
         """
         # When doing left rotating, the child being lifted would be the right child. Vice versa.
         lifted_child = node.ch[direction ^ 1]
-        print('lifted_child: %s' % lifted_child)
         if node.is_left_child:
             node.parent.left = lifted_child
         if node.is_right_child:
