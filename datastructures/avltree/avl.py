@@ -19,24 +19,30 @@ class AVLNode(object):
     def rotate(cls, node, direction):
         """Apply rotation (ROTATE_LEFT or ROTATE_right) to a node.
         """
-        if node.is_left_child:
-            node.parent.left = node.right
-        if node.is_right_child:
-            node.parent.right = node.right
         # When doing left rotating, the child being lifted would be the right child. Vice versa.
         lifted_child = node.ch[direction ^ 1]
+        print('lifted_child: %s' % lifted_child)
+        if node.is_left_child:
+            node.parent.left = lifted_child
+        if node.is_right_child:
+            node.parent.right = lifted_child
         lifted_child.parent = node.parent
         node.parent = lifted_child
-        node.right = lifted_child.ch[direction]
+        node.ch[direction ^ 1] = lifted_child.ch[direction]
+        if node.ch[direction ^ 1] is not None:
+            node.ch[direction ^ 1].parent = node
         lifted_child.ch[direction] = node
-        node.update_depth()
-        lifted_child.update_depth()
+
+        node.update_depth_all_ancestors()
 
     @classmethod
     def rebalance(cls, node):
         heavy_branch, depth_left, depth_right = cls.get_heavy_branch(node)
         if math.abs(depth_right - depth_left) <= 1:
             # It's balanced in its own level. There is no need to rebalance.
+            return
+        if node.num == float('-inf'):
+            # Do not rebalance fake root
             return
         heavy_branch_next_level, _1, _2 = cls.get_heavy_branch(node.ch[heavy_branch])
         heavy_branch_root = node.ch[heavy_branch]
@@ -47,8 +53,8 @@ class AVLNode(object):
 
     @classmethod
     def get_heavy_branch(cls, node):
-        depth_left = cls.get_depth(node.ch[LEFT])
-        depth_right = cls.get_depth(node.ch[RIGHT])
+        depth_left = cls.get_depth(node.left)
+        depth_right = cls.get_depth(node.right)
         if depth_right > depth_left:
             heavy_branch = RIGHT
         elif depth_right < depth_left:
@@ -62,42 +68,139 @@ class AVLNode(object):
         return node._depth if node is not None else -1
 
     def update_depth(self):
-        self._depth = max(AVLNode.get_depth(self.ch[LEFT]),
-                AVLNode.get_depth(self.ch[RIGHT])) + 1
+        self._depth = max(AVLNode.get_depth(self.left),
+                AVLNode.get_depth(self.right)) + 1
+
+    def update_depth_all_ancestors(self):
+        current = self
+        while current:
+            current.update_depth()
+            current = current.parent
 
     @property
     def is_left_child(self):
-        return self.parent is not None and self.parent.ch[LEFT] is self
+        return self.parent is not None and self.parent.left is self
 
     @property
     def is_right_child(self):
-        return self.parent is not None and self.parent.ch[RIGHT] is self
+        return self.parent is not None and self.parent.right is self
+
+    @property
+    def left(self):
+        return self.ch[LEFT]
+
+    @property
+    def right(self):
+        return self.ch[RIGHT]
+
+    @left.setter
+    def left(self, val):
+        self.ch[LEFT] = val
+
+    @right.setter
+    def right(self, val):
+        self.ch[RIGHT] = val
+
+    def __repr__(self):
+        return "AVLNode(num={0}, occurence={1}, depth={2})".format(
+                self.num,
+                self.occurence,
+                AVLNode.get_depth(self))
 
 
-class AVL(object):
+class AVLTree(object):
     def __init__(self):
-        self.root = None
+        self.root = AVLNode(num=float('-inf'))
 
     def insert(self, num):
-        if self.root is None:
-            self.root = AVLNode(num=num)
-            return
-        cursor = self.root
-        parent = None
+        cursor = self.root.right
+        parent = self.root
+        nodes_to_rebalance = []
         while cursor is not None:
             if cursor.num == num:
                 cursor.occurence += 1
                 return
             elif cursor.num > num:
                 parent = cursor
-                cursor = cursor.ch[LEFT]
+                cursor = cursor.left
             else:
-                parent = cussor
-                cursor = cursor.ch[RIGHT]
+                parent = cursor
+                cursor = cursor.right
+            nodes_to_rebalance.append(cursor)
         new_node = AVLNode(num=num, parent=parent)
         if num > parent.num:
-            parent.ch[RIGHT] = new_node
+            parent.right = new_node
         else:
-            parent.ch[LEFT] = new_node
+            parent.left = new_node
+
+        nodes_to_rebalance.reverse()
+        for node in nodes_to_rebalance:
+            AVLNode.rebalance(node)
+
         return new_node
+
+    def traverse(self):
+        def recursive_build_list(node, result):
+            if node is None:
+                return
+            recursive_build_list(node.left)
+            result.append(node.num)
+            recursive_build_list(node.right)
+
+        result = []
+        recursive_build_list(self.root, result)
+        return result
+
+    @classmethod
+    def serialize(cls, tree):
+        def build_key_value_pairs(node, kv, key=1):
+            if node is None:
+                return
+            kv[key] = (node.num, node.occurence, )
+            build_key_value_pairs(node.left, kv, key << 1)
+            build_key_value_pairs(node.right, kv, (key << 1) + 1)
+
+        kv = {}
+        build_key_value_pairs(tree.root.right, kv)
+        max_key = max(list(kv))
+        serialized_tree = [None] * (max_key + 1)
+        for key, val in kv.items():
+            serialized_tree[key] = val if val[1] > 1 else val[0]
+        return serialized_tree[1:]
+
+    @classmethod
+    def deserialize(cls, serialized_tree):
+        if not serialized_tree:
+            return None
+        serialized_tree = [None] + serialized_tree
+        if type(serialized_tree[0]).__name__ == 'tuple':
+            root = AVLNode(num=serialized_tree[1][0])
+            root.occurence = serialized_tree[1][1]
+        else:
+            root = AVLNode(num=serialized_tree[1])
+        nodes = [None, root]
+        for i in xrange(2, len(serialized_tree)):
+            if serialized_tree[i] is None:
+                nodes.append(None)
+                continue
+            parent = nodes[i >> 1]
+            if type(serialized_tree[i]).__name__ == 'tuple':
+                node = AVLNode(num=serialized_tree[i][0], parent=parent)
+                node.occurence = serialized_tree[i][1]
+            else:
+                node = AVLNode(num=serialized_tree[i], parent=parent)
+            if i % 2 == 0:
+                parent.left = node
+            else:
+                parent.right = node
+            nodes.append(node)
+        # update depth
+        for i in xrange(len(nodes) - 1, -1, -1):
+            if nodes[i] is not None:
+                nodes[i].update_depth()
+        tree = cls()
+        tree.root.right = root
+        root.parent = tree.root
+        tree.root.update_depth()
+        return tree
 
