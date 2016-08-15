@@ -67,6 +67,13 @@ class AVLNodeTest(TestCase):
         AVLNode.rebalance(actual_root)
         assert AVLTree.serialize(tree) == [2, 1, 3]
 
+    def test_rebalance_zigzag_case_simple_2(self):
+        serialized_tree = [1, None, 3, None, None, 2]
+        tree = AVLTree.deserialize(serialized_tree)
+        actual_root = tree.root.right
+        AVLNode.rebalance(actual_root)
+        assert AVLTree.serialize(tree) == [2, 1, 3]
+
 
 if __name__ == '__main__':
     unittest.main()
