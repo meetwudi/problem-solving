@@ -1,4 +1,5 @@
 import unittest
+import random
 
 from unittest import TestCase
 from avl import AVLNode
@@ -7,6 +8,13 @@ from avl import LEFT
 from avl import RIGHT
 from avl import ROTATE_LEFT
 from avl import ROTATE_RIGHT
+
+
+def is_ascending(arr):
+    for i in xrange(len(arr) - 1):
+        if arr[i] > arr[i + 1]:
+            return False
+        return True
 
 
 class AVLNodeTest(TestCase):
@@ -106,9 +114,33 @@ class AVLNodeTest(TestCase):
         nums = [-1, 11, 9, 10, 10.5]
         for num in nums:
             tree.insert(num)
-            print AVLTree.serialize(tree)
         assert tree.traverse() == [-1, 9, 10, 10.5, 11]
+        assert AVLTree.serialize(tree) == [9, -1, 10.5, None, None, 10, 11]
 
+    def test_insert_duplicates(self):
+        tree = AVLTree()
+        nums = [-1, 11, 11, 9, 10, 10.5]
+        for num in nums:
+            tree.insert(num)
+        assert tree.traverse() == [-1, 9, 10, 10.5, 11]
+        assert AVLTree.serialize(tree) == [9, -1, 10.5, None, None, 10, (11, 2)]
+
+    def test_ascending_inserts(self):
+        n = 10000
+        tree = AVLTree()
+        for num in xrange(n):
+            tree.insert(num)
+        traversal = tree.traverse()
+        assert is_ascending(traversal)
+
+    def test_random_inserts(self):
+        n = 10000
+        tree = AVLTree()
+        nums = [random.randint(0, 1200) for _ in xrange(n)]
+        for num in nums:
+            tree.insert(num)
+        traversal = tree.traverse()
+        assert is_ascending(traversal)
 
 if __name__ == '__main__':
     unittest.main()
