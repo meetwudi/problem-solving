@@ -43,7 +43,29 @@ class AVLNodeTest(TestCase):
         tree = AVLTree.deserialize(serialized_tree)
         actual_root = tree.root.right
         AVLNode.rotate(actual_root, ROTATE_RIGHT)
-        print AVLTree.serialize(tree)
+        assert AVLTree.serialize(tree) == [1, None, 3, None, None, None, 5, None,
+                None, None, None, None, None, 4, 6]
+
+    def test_rebalance_regular_case_simple(self):
+        serialized_tree = [3, 2, None, 1]
+        tree = AVLTree.deserialize(serialized_tree)
+        actual_root = tree.root.right
+        AVLNode.rebalance(actual_root)
+        assert AVLTree.serialize(tree) == [2, 1, 3]
+
+    def test_rebalance_regular_case_simple_2(self):
+        serialized_tree = [1, None, 2, None, None, None, 3]
+        tree = AVLTree.deserialize(serialized_tree)
+        actual_root = tree.root.right
+        AVLNode.rebalance(actual_root)
+        assert AVLTree.serialize(tree) == [2, 1, 3]
+
+    def test_rebalance_zigzag_case_simple(self):
+        serialized_tree = [3, 1, None, None, 2]
+        tree = AVLTree.deserialize(serialized_tree)
+        actual_root = tree.root.right
+        AVLNode.rebalance(actual_root)
+        assert AVLTree.serialize(tree) == [2, 1, 3]
 
 
 if __name__ == '__main__':

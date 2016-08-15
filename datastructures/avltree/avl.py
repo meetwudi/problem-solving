@@ -1,11 +1,10 @@
 import sys
-import math
-
 
 LEFT = 0
 RIGHT = 1
 ROTATE_LEFT = 0
 ROTATE_RIGHT = 1
+
 
 class AVLNode(object):
     def __init__(self, num, parent=None):
@@ -37,7 +36,7 @@ class AVLNode(object):
     @classmethod
     def rebalance(cls, node):
         heavy_branch, depth_left, depth_right = cls.get_heavy_branch(node)
-        if math.abs(depth_right - depth_left) <= 1:
+        if abs(depth_right - depth_left) <= 1:
             # It's balanced in its own level. There is no need to rebalance.
             return
         if node.num == float('-inf'):
@@ -45,7 +44,7 @@ class AVLNode(object):
             return
         heavy_branch_next_level, _1, _2 = cls.get_heavy_branch(node.ch[heavy_branch])
         heavy_branch_root = node.ch[heavy_branch]
-        zigzag = heavy_branch_next_level == heavy_branch # is it a zigzag case?
+        zigzag = heavy_branch_next_level != heavy_branch # is it a zigzag case?
         if zigzag:
             cls.rotate(heavy_branch_root, direction=heavy_branch)
         cls.rotate(node, direction=heavy_branch ^ 1)
