@@ -113,28 +113,29 @@ class AVLTree(object):
     def insert(self, num):
         cursor = self.root.right
         parent = self.root
-        nodes_to_rebalance = []
+        ancestors = []
         while cursor is not None:
             if cursor.num == num:
                 cursor.occurence += 1
                 return
-            elif cursor.num > num:
+            ancestors.append(cursor)
+            if cursor.num > num:
                 parent = cursor
                 cursor = cursor.left
             else:
                 parent = cursor
                 cursor = cursor.right
-            nodes_to_rebalance.append(cursor)
+
         new_node = AVLNode(num=num, parent=parent)
         if num > parent.num:
             parent.right = new_node
         else:
             parent.left = new_node
 
-        nodes_to_rebalance.reverse()
-        for node in nodes_to_rebalance:
+        ancestors.reverse()
+        for node in ancestors:
+            node.update_depth()
             AVLNode.rebalance(node)
-
         return new_node
 
     def traverse(self):

@@ -79,6 +79,36 @@ class AVLNodeTest(TestCase):
         tree = AVLTree.deserialize(serialized_tree)
         assert tree.traverse() == [1, 2, 3]
 
+    def test_insert_single(self):
+        tree = AVLTree()
+        tree.insert(10)
+        assert tree.traverse() == [10]
+        assert AVLTree.serialize(tree) == [10]
+
+    def test_insert_multiple(self):
+        tree = AVLTree()
+        nums = [10, 20, -1, 21]
+        for num in nums:
+            tree.insert(num)
+        assert tree.traverse() == [-1, 10, 20, 21]
+        assert AVLTree.serialize(tree) == [10, -1, 20, None, None, None, 21]
+
+    def test_insert_multiple_should_balance(self):
+        tree = AVLTree()
+        nums = [-1, 10, 20, 21]
+        for num in nums:
+            tree.insert(num)
+        assert tree.traverse() == [-1, 10, 20, 21]
+        assert AVLTree.serialize(tree) == [10, -1, 20, None, None, None, 21]
+
+    def test_insert_multiple_should_balance_zigzag(self):
+        tree = AVLTree()
+        nums = [-1, 11, 9, 10, 10.5]
+        for num in nums:
+            tree.insert(num)
+            print AVLTree.serialize(tree)
+        assert tree.traverse() == [-1, 9, 10, 10.5, 11]
+
 
 if __name__ == '__main__':
     unittest.main()
