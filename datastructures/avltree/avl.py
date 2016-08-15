@@ -141,13 +141,13 @@ class AVLTree(object):
         def recursive_build_list(node, result):
             if node is None:
                 return
-            recursive_build_list(node.left)
+            recursive_build_list(node.left, result)
             result.append(node.num)
-            recursive_build_list(node.right)
+            recursive_build_list(node.right, result)
 
         result = []
         recursive_build_list(self.root, result)
-        return result
+        return result[1:]
 
     @classmethod
     def serialize(cls, tree):
