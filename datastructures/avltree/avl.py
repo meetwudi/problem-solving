@@ -1,5 +1,3 @@
-import sys
-
 LEFT = 0
 RIGHT = 1
 ROTATE_LEFT = 0
